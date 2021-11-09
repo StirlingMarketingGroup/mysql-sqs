@@ -2,6 +2,36 @@
 
 A small MySQL UDF library for making AWS SQS calls from a MySQL database. Currently it only sends messages, but more functions could be implemented if needed.
 
+## Example:
+
+You can use `null` for values you don't want to include. This example sends a message with the specified message body, delay period, and message attributes, to the specified queue.
+
+The odd syntax `into @_` is so we can run this in a trigger without the "Not allowed to return a result set from a trigger" error.
+
+```sql
+select `sqs_send_message`(
+    'https://sqs.us-east-1.amazonaws.com/80398EXAMPLE/MyQueue',  -- Queue URL
+    'Information about the largest city in Any Region.', -- Message Body
+    10,   -- Delay Seconds
+    '{"City": {"DataType": "String","StringValue": "Any City"}}', -- Message Attributes
+    null, -- Message System Attributes
+    null, -- Message Deduplication ID
+    null  -- Message Group ID
+) into @_;
+```
+
+## Output:
+
+The output will be null if there was an error sending the message. If you want to see the actual error messages, they will appear in the MySQL error log file.
+
+```json
+{
+  "MD5OfMessageBody": "51b0a325...39163aa0",
+  "MD5OfMessageAttributes": "00484c68...59e48f06",
+  "MessageId": "da68f62c-0c07-4bee-bf5f-7e856EXAMPLE"
+}
+```
+
 ## Usage
 
 ### `sqs_send_message`
@@ -200,35 +230,7 @@ For best practices of using `MessageGroupId` , see [Using the MessageGroupId 
 >`MessageGroupId` is required for FIFO queues. You can't use it for Standard queues.
 >
 
-## Example:
-
-You can use `null` for values you don't want to include. This example sends a message with the specified message body, delay period, and message attributes, to the specified queue.
-
-The odd syntax `into @_` is so we can run this in a trigger without the "Not allowed to return a result set from a trigger" error.
-
-```sql
-select `sqs_send_message`(
-	'https://sqs.us-east-1.amazonaws.com/80398EXAMPLE/MyQueue',  -- Queue URL
-    'Information about the largest city in Any Region.', -- Message Body
-    10,   -- Delay Seconds
-    '{"City": {"DataType": "String","StringValue": "Any City"}}', -- Message Attributes
-	null, -- Message System Attributes
-    null, -- Message Deduplication ID
-    null  -- Message Group ID
-) into @_;
-```
-
 ## Output:
-
-The output will be null if there was an error sending the message. If you want to see the actual error messages, they will appear in the MySQL error log file like so
-
-```json
-{
-  "MD5OfMessageBody": "51b0a325...39163aa0",
-  "MD5OfMessageAttributes": "00484c68...59e48f06",
-  "MessageId": "da68f62c-0c07-4bee-bf5f-7e856EXAMPLE"
-}
-```
 
 #### `MD5OfMessageBody` (string)
 
